@@ -1,0 +1,1664 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#09070d">
+  <title>Tirdznisi Carpool</title>
+  <style>
+    :root {
+      --ink: #17131d;
+      --paper: #fff7d6;
+      --cream: #ffe9a8;
+      --red: #f04444;
+      --red-dark: #8d1f2d;
+      --green: #3fce70;
+      --green-dark: #19713d;
+      --blue: #75d6f7;
+      --shadow: 0 6px 0 rgba(29, 19, 36, .28);
+      --pixel-font: "Courier New", "Lucida Console", monospace;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      width: 100%;
+      min-height: 100%;
+      margin: 0;
+      background: #09070d;
+      color: var(--ink);
+      font-family: var(--pixel-font);
+      overflow: hidden;
+      overscroll-behavior: none;
+    }
+
+    button { font: inherit; }
+
+    button:focus-visible {
+      outline: 4px solid #fff;
+      outline-offset: 4px;
+    }
+
+    .game-shell {
+      position: relative;
+      width: 100vw;
+      height: 100dvh;
+      min-height: 620px;
+      overflow: hidden;
+      isolation: isolate;
+      background: #09070d;
+    }
+
+    .screen {
+      position: absolute;
+      inset: 0;
+      display: none;
+    }
+
+    .screen.active { display: flex; }
+
+    .pixel-panel {
+      border: 5px solid var(--ink);
+      box-shadow: 0 0 0 5px #f7d779, 10px 10px 0 rgba(0,0,0,.28);
+    }
+
+    .landing-screen,
+    .ending-screen {
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      color: #fff;
+      text-align: center;
+      background:
+        radial-gradient(circle at 18% 22%, #3a283f 0 2px, transparent 3px),
+        radial-gradient(circle at 78% 34%, #3a283f 0 2px, transparent 3px),
+        radial-gradient(circle at 66% 82%, #3a283f 0 2px, transparent 3px),
+        radial-gradient(circle at 34% 72%, #3a283f 0 2px, transparent 3px),
+        #09070d;
+      background-size: 132px 132px, 173px 173px, 211px 211px, 257px 257px, auto;
+      z-index: 20;
+    }
+
+    .landing-content {
+      width: min(92vw, 820px);
+      padding: 24px;
+      animation: landing-in .55s steps(5, end) both;
+    }
+
+    .eyebrow {
+      margin: 0 0 18px;
+      color: #ffd95f;
+      font-weight: 900;
+      font-size: clamp(11px, 1.4vw, 15px);
+      letter-spacing: .22em;
+    }
+
+    .game-title {
+      margin: 18px auto 22px;
+      color: #ff4b4b;
+      font-size: clamp(34px, 7.2vw, 82px);
+      line-height: .96;
+      font-weight: 900;
+      letter-spacing: -.06em;
+      text-shadow:
+        0 5px 0 #8c1e2c,
+        5px 5px 0 #8c1e2c,
+        5px 10px 0 #34131b;
+      image-rendering: pixelated;
+    }
+
+    .landing-subtitle {
+      margin: 0 auto 28px;
+      max-width: 620px;
+      color: #f6ddb0;
+      font-weight: 700;
+      font-size: clamp(12px, 1.7vw, 17px);
+      line-height: 1.65;
+      letter-spacing: .08em;
+    }
+
+    .logo-wrap {
+      position: relative;
+      width: 156px;
+      height: 134px;
+      margin: 0 auto;
+      display: grid;
+      place-items: center;
+    }
+
+    .logo-rays {
+      position: absolute;
+      inset: 0;
+      background: repeating-conic-gradient(from 0deg, #f4c94e 0 8deg, transparent 8deg 23deg);
+      clip-path: polygon(45% 0,55% 0,58% 34%,76% 7%,84% 13%,65% 41%,98% 31%,100% 41%,68% 50%,97% 65%,92% 74%,63% 59%,73% 94%,63% 97%,53% 65%,47% 100%,37% 97%,44% 64%,13% 84%,7% 76%,36% 57%,0 56%,0 46%,36% 47%,8% 21%,16% 14%,43% 40%);
+      opacity: .72;
+      animation: rays 1.4s steps(4, end) infinite;
+    }
+
+    .logo-avatar { width: 92px; height: 112px; filter: drop-shadow(6px 7px 0 #4b2031); z-index: 1; }
+
+    .pixel-button {
+      position: relative;
+      border: 4px solid #102d1d;
+      border-radius: 0;
+      padding: 15px 34px;
+      color: #071b0e;
+      background: var(--green);
+      box-shadow: inset -5px -5px 0 #239950, inset 5px 5px 0 #83f39e, 0 7px 0 #0e4525;
+      cursor: pointer;
+      font-weight: 900;
+      font-size: 18px;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      transition: transform .08s steps(1), box-shadow .08s steps(1);
+    }
+
+    .pixel-button:hover { filter: brightness(1.08); transform: translateY(-2px); }
+    .pixel-button:active { transform: translateY(5px); box-shadow: inset -4px -4px 0 #239950, inset 4px 4px 0 #83f39e, 0 2px 0 #0e4525; }
+
+    .start-button { min-width: 210px; }
+
+    .world-screen {
+      flex-direction: column;
+      background: #7bd8f4;
+      overflow: hidden;
+      z-index: 5;
+    }
+
+    .hud {
+      position: absolute;
+      z-index: 8;
+      top: 13px;
+      left: 16px;
+      right: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      pointer-events: none;
+    }
+
+    .hud-title,
+    .progress-card {
+      border: 4px solid #211526;
+      background: rgba(255, 247, 214, .94);
+      box-shadow: 5px 5px 0 rgba(36, 22, 42, .35);
+      font-weight: 900;
+    }
+
+    .hud-title {
+      padding: 9px 13px;
+      color: var(--red-dark);
+      font-size: clamp(11px, 1.4vw, 16px);
+      letter-spacing: .08em;
+    }
+
+    .progress-card {
+      width: min(290px, 42vw);
+      padding: 8px 10px 9px;
+    }
+
+    .progress-copy {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 5px;
+      font-size: 11px;
+      letter-spacing: .05em;
+    }
+
+    .progress-track {
+      height: 12px;
+      border: 3px solid var(--ink);
+      background: #d2c8aa;
+    }
+
+    .progress-fill {
+      display: block;
+      width: 0;
+      height: 100%;
+      background: repeating-linear-gradient(90deg, #42ca6e 0 10px, #2da957 10px 14px);
+      transition: width .25s steps(5, end);
+    }
+
+    .sky-zone {
+      position: relative;
+      flex: 1 1 auto;
+      min-height: 220px;
+      background: linear-gradient(#70d3f4 0 68%, #c6edf3 68% 100%);
+      transition: background 1.1s steps(8, end);
+      overflow: hidden;
+    }
+
+    .sun,
+    .moon {
+      position: absolute;
+      right: 10%;
+      top: 52px;
+      width: 58px;
+      height: 58px;
+      border: 6px solid #ec9f24;
+      background: #ffe667;
+      box-shadow: 12px 0 0 rgba(255,230,103,.36), -12px 0 0 rgba(255,230,103,.36), 0 12px 0 rgba(255,230,103,.28), 0 -12px 0 rgba(255,230,103,.28);
+      transition: opacity .6s steps(5, end);
+    }
+
+    .moon {
+      opacity: 0;
+      border-color: #b6c8e8;
+      background: #eef5ff;
+      box-shadow: inset -13px -8px 0 #b8c7dc;
+    }
+
+    .cloud {
+      position: absolute;
+      width: 76px;
+      height: 22px;
+      background: rgba(255,255,255,.78);
+      box-shadow: 18px -14px 0 rgba(255,255,255,.78), 43px -7px 0 rgba(255,255,255,.78);
+      transition: opacity .6s steps(4, end);
+    }
+
+    .cloud.one { left: 12%; top: 82px; }
+    .cloud.two { left: 49%; top: 118px; transform: scale(.72); }
+
+    .stars {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      background-image:
+        radial-gradient(circle at 10% 22%, #fff 0 2px, transparent 3px),
+        radial-gradient(circle at 22% 42%, #ffe48b 0 2px, transparent 3px),
+        radial-gradient(circle at 37% 17%, #fff 0 2px, transparent 3px),
+        radial-gradient(circle at 57% 31%, #fff 0 2px, transparent 3px),
+        radial-gradient(circle at 75% 19%, #ffe48b 0 2px, transparent 3px),
+        radial-gradient(circle at 88% 38%, #fff 0 2px, transparent 3px);
+      transition: opacity .8s steps(5, end);
+    }
+
+    .skyline {
+      position: absolute;
+      left: 0;
+      bottom: -1px;
+      width: 100%;
+      height: min(84%, 315px);
+      color: #315d4b;
+      transition: filter 1.1s steps(8, end), opacity .8s;
+    }
+
+    .district-sign {
+      position: absolute;
+      z-index: 3;
+      left: 50%;
+      bottom: 47px;
+      transform: translateX(-50%);
+      padding: 5px 9px;
+      border: 3px solid #4a2a21;
+      background: #f5d069;
+      color: #6b3427;
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: .13em;
+      box-shadow: 4px 4px 0 rgba(44,30,28,.2);
+    }
+
+    .parking-zone {
+      position: relative;
+      flex: 0 0 238px;
+      display: flex;
+      align-items: center;
+      padding: 21px 18px 12px;
+      background:
+        repeating-linear-gradient(90deg, transparent 0 154px, rgba(255,255,255,.45) 154px 159px, transparent 159px 178px),
+        linear-gradient(#73767b, #555960);
+      border-top: 8px solid #d7d6c7;
+      border-bottom: 8px solid #ece5b7;
+      box-shadow: inset 0 5px 0 #969aa0;
+      overflow: hidden;
+    }
+
+    .cars-row {
+      width: 100%;
+      display: grid;
+      grid-template-columns: repeat(6, minmax(145px, 1fr));
+      gap: clamp(8px, 1.2vw, 18px);
+      align-items: end;
+      position: relative;
+      z-index: 2;
+    }
+
+    .parked-car {
+      position: relative;
+      min-width: 0;
+      height: 180px;
+      padding: 0;
+      border: 0;
+      color: var(--ink);
+      background: transparent;
+      cursor: pointer;
+      transition: transform .12s steps(2, end), filter .12s;
+    }
+
+    .parked-car:hover { transform: translateY(-7px); filter: brightness(1.07); }
+
+    .car-name {
+      position: absolute;
+      z-index: 4;
+      left: 50%;
+      top: 0;
+      transform: translateX(-50%);
+      min-width: 86%;
+      padding: 6px 5px;
+      border: 3px solid var(--ink);
+      color: #fff9d8;
+      background: #28212d;
+      box-shadow: 4px 4px 0 rgba(0,0,0,.25);
+      font-size: clamp(9px, 1vw, 12px);
+      font-weight: 900;
+      letter-spacing: .03em;
+      white-space: nowrap;
+    }
+
+    .car-count {
+      position: absolute;
+      z-index: 5;
+      top: 31px;
+      right: 2px;
+      min-width: 34px;
+      padding: 3px 4px;
+      border: 2px solid var(--ink);
+      background: #fff0a7;
+      font-size: 9px;
+      font-weight: 900;
+    }
+
+    .side-car {
+      position: absolute;
+      left: 4%;
+      right: 4%;
+      top: 65px;
+      height: 86px;
+    }
+
+    .car-body {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 15px;
+      height: 53px;
+      border: 4px solid #1f1822;
+      background: var(--car-color);
+      box-shadow: inset 0 -10px 0 color-mix(in srgb, var(--car-color) 70%, #000), 5px 5px 0 rgba(0,0,0,.24);
+      clip-path: polygon(0 32%, 13% 32%, 25% 0, 70% 0, 84% 28%, 100% 35%, 100% 89%, 0 89%);
+    }
+
+    .car-window-back,
+    .car-window-front {
+      position: absolute;
+      z-index: 2;
+      top: 5px;
+      height: 27px;
+      border: 3px solid #231a28;
+      overflow: hidden;
+      background: #bcecf5;
+    }
+
+    .car-window-back { left: 28%; width: 27%; clip-path: polygon(14% 0, 100% 0, 100% 100%, 0 100%); }
+    .car-window-front { left: 56%; width: 23%; clip-path: polygon(0 0, 67% 0, 100% 100%, 0 100%); }
+
+    .driver-mini {
+      position: absolute;
+      z-index: 3;
+      width: 30px;
+      height: 38px;
+      top: 1px;
+      left: 55%;
+    }
+
+    .driver-mini .pixel-avatar { width: 30px; height: 38px; }
+
+    .steering-wheel {
+      position: absolute;
+      z-index: 4;
+      right: 17%;
+      top: 22px;
+      width: 17px;
+      height: 17px;
+      border: 3px solid #271d2b;
+      border-radius: 50%;
+      background: transparent;
+    }
+
+    .wheel {
+      position: absolute;
+      z-index: 4;
+      bottom: 3px;
+      width: 30px;
+      height: 30px;
+      border: 5px solid #17131d;
+      border-radius: 50%;
+      background: #aab0b2;
+      box-shadow: inset 0 0 0 4px #45414b;
+    }
+
+    .wheel.left { left: 17%; }
+    .wheel.right { right: 12%; }
+
+    .bumper {
+      position: absolute;
+      z-index: 5;
+      bottom: 18px;
+      width: 13px;
+      height: 13px;
+      border: 2px solid #201823;
+    }
+
+    .bumper.front { right: -2px; background: #ffe271; }
+    .bumper.back { left: -2px; background: #ef4f5f; }
+
+    .passenger-pips {
+      position: absolute;
+      z-index: 5;
+      left: 11%;
+      right: 11%;
+      bottom: -10px;
+      display: flex;
+      justify-content: center;
+      gap: 3px;
+    }
+
+    .passenger-pips i {
+      display: block;
+      width: 9px;
+      height: 9px;
+      border: 2px solid #201823;
+      background: #c8c2ad;
+    }
+
+    .passenger-pips i.filled { background: #65e28c; }
+    .passenger-pips i.reserved { background: #f7bdcf; }
+
+    .closed-ribbon {
+      position: absolute;
+      z-index: 5;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 4px 7px;
+      border: 2px solid var(--ink);
+      background: #d8d8d8;
+      font-size: 8px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .roster-zone {
+      position: relative;
+      flex: 0 0 174px;
+      padding: 12px 14px 10px;
+      background:
+        linear-gradient(90deg, #cab57e 0 18px, transparent 18px calc(100% - 18px), #cab57e calc(100% - 18px)),
+        repeating-linear-gradient(90deg, #e9d7a4 0 92px, #ddc791 92px 96px);
+      overflow: hidden;
+    }
+
+    .roster-heading {
+      margin: 0 0 7px;
+      text-align: center;
+      color: #60452f;
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: .18em;
+    }
+
+    .roster {
+      display: grid;
+      grid-template-columns: repeat(15, minmax(55px, 1fr));
+      gap: 5px;
+      align-items: end;
+      max-width: 1180px;
+      margin: 0 auto;
+    }
+
+    .person-card {
+      position: relative;
+      min-width: 0;
+      height: 126px;
+      padding: 25px 2px 3px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      border: 0;
+      background: transparent;
+      transition: opacity .18s steps(2), filter .18s steps(2);
+    }
+
+    .person-card .person-name {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      max-width: 72px;
+      padding: 3px 4px;
+      color: #fffbe7;
+      background: #322536;
+      border: 2px solid #17131d;
+      font-size: clamp(7px, .72vw, 10px);
+      line-height: 1.05;
+      font-weight: 900;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .person-card .pixel-avatar { width: clamp(39px, 4.6vw, 55px); height: clamp(55px, 6.2vw, 73px); }
+
+    .person-card.seated { opacity: .28; filter: grayscale(1); }
+
+    .person-card.seated::after {
+      content: attr(data-car-label);
+      position: absolute;
+      left: 50%;
+      bottom: 39px;
+      transform: translateX(-50%) rotate(-5deg);
+      width: max-content;
+      max-width: 68px;
+      padding: 3px 4px;
+      border: 2px solid #271b2c;
+      background: #67d98b;
+      color: #14251a;
+      font-size: 7px;
+      font-weight: 900;
+      line-height: 1.1;
+    }
+
+    .pixel-avatar {
+      display: block;
+      overflow: visible;
+      image-rendering: pixelated;
+      shape-rendering: crispEdges;
+    }
+
+    .night .sky-zone { background: linear-gradient(#121b42 0 70%, #34445b 70% 100%); }
+    .night .sun, .night .cloud { opacity: 0; }
+    .night .moon, .night .stars { opacity: 1; }
+    .night .skyline { filter: brightness(.38) saturate(.85) hue-rotate(12deg); }
+    .night .district-sign { filter: brightness(.62); }
+
+    .car-overlay {
+      position: fixed;
+      z-index: 30;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      background: rgba(10, 7, 14, .79);
+      backdrop-filter: blur(2px);
+    }
+
+    .car-overlay[hidden] { display: none; }
+
+    .interior-panel {
+      position: relative;
+      width: min(94vw, 850px);
+      max-height: 93vh;
+      overflow: auto;
+      padding: 24px 26px 22px;
+      border: 6px solid #1b1420;
+      background: #f8edc9;
+      box-shadow: 0 0 0 6px var(--panel-color, #e84f76), 12px 12px 0 rgba(0,0,0,.38);
+      animation: panel-pop .25s steps(4, end) both;
+    }
+
+    .modal-close {
+      position: absolute;
+      z-index: 4;
+      top: 10px;
+      right: 10px;
+      width: 38px;
+      height: 38px;
+      padding: 0;
+      border: 4px solid #1b1420;
+      color: #fff;
+      background: #dc4253;
+      box-shadow: 3px 3px 0 #7d1f30;
+      cursor: pointer;
+      font-weight: 900;
+    }
+
+    .interior-title {
+      margin: 0 42px 4px;
+      text-align: center;
+      color: #2b1d30;
+      font-size: clamp(19px, 3.2vw, 31px);
+      font-weight: 900;
+      letter-spacing: .04em;
+    }
+
+    .interior-subtitle {
+      margin: 0 34px 14px;
+      text-align: center;
+      color: #766077;
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1.5;
+    }
+
+    .top-car {
+      position: relative;
+      width: min(100%, 610px);
+      min-height: 398px;
+      margin: 0 auto;
+      padding: 66px 45px 62px;
+      border: 6px solid #211823;
+      border-radius: 30% 30% 18% 18% / 12% 12% 9% 9%;
+      background: var(--panel-color);
+      box-shadow:
+        inset 0 0 0 12px color-mix(in srgb, var(--panel-color) 70%, #000),
+        inset 0 0 0 18px #2e2530,
+        8px 8px 0 rgba(0,0,0,.22);
+    }
+
+    .top-car::before,
+    .top-car::after {
+      content: "";
+      position: absolute;
+      left: 14%;
+      right: 14%;
+      height: 42px;
+      border: 5px solid #211823;
+      background: #a8e2eb;
+    }
+
+    .top-car::before { top: 11px; border-radius: 42% 42% 0 0; }
+    .top-car::after { bottom: 11px; border-radius: 0 0 35% 35%; background: #7da5ad; }
+
+    .top-wheel {
+      position: absolute;
+      left: 9px;
+      width: 25px;
+      height: 62px;
+      border: 5px solid #17121a;
+      border-radius: 9px;
+      background: #3c3941;
+      box-shadow: calc(min(100vw, 610px) - 48px) 0 0 #3c3941;
+    }
+
+    .top-wheel.a { top: 79px; }
+    .top-wheel.b { bottom: 79px; }
+
+    .seat-row {
+      position: relative;
+      z-index: 2;
+      display: grid;
+      gap: 12px;
+    }
+
+    .front-row { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-bottom: 20px; }
+    .back-row { grid-template-columns: repeat(var(--back-count, 2), minmax(0, 1fr)); }
+
+    .seat {
+      position: relative;
+      min-height: 112px;
+      padding: 24px 7px 7px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      border: 4px solid #28202d;
+      border-radius: 8px 8px 15px 15px;
+      background: #706779;
+      box-shadow: inset 0 -9px 0 #504758, 4px 4px 0 rgba(0,0,0,.23);
+      color: #fff;
+      overflow: hidden;
+    }
+
+    button.seat { cursor: pointer; }
+    button.seat:hover { filter: brightness(1.12); transform: translateY(-2px); }
+
+    .seat.empty { background: #efe4bd; color: #392c3c; box-shadow: inset 0 -9px 0 #cbbf99, 4px 4px 0 rgba(0,0,0,.23); }
+    .seat.reserved { background: #ffc5db; color: #482838; box-shadow: inset 0 -9px 0 #df8eac, 4px 4px 0 rgba(0,0,0,.23); }
+    .seat.fixed { background: #62596c; }
+    .seat.blocked { background: repeating-linear-gradient(135deg, #55505a 0 10px, #3c3841 10px 20px); opacity: .9; }
+    button.seat.blocked { cursor: not-allowed; }
+
+    .seat-label {
+      position: absolute;
+      left: 5px;
+      right: 5px;
+      top: 5px;
+      text-align: center;
+      font-size: clamp(7px, 1vw, 10px);
+      line-height: 1.1;
+      font-weight: 900;
+      letter-spacing: .04em;
+    }
+
+    .seat .pixel-avatar { width: 48px; height: 60px; }
+    .seat-person { margin-top: 1px; font-size: 10px; font-weight: 900; }
+
+    .seat-icon {
+      display: grid;
+      place-items: center;
+      width: 48px;
+      height: 48px;
+      border: 4px dashed currentColor;
+      font-size: 28px;
+      font-weight: 900;
+    }
+
+    .wheel-mark {
+      position: absolute;
+      right: 8px;
+      bottom: 8px;
+      width: 30px;
+      height: 30px;
+      border: 5px solid #211823;
+      border-radius: 50%;
+      box-shadow: inset 0 0 0 3px #c6bdc8;
+    }
+
+    .interior-legend {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 8px 17px;
+      margin-top: 15px;
+      color: #5e4c61;
+      font-size: 10px;
+      font-weight: 900;
+      line-height: 1.4;
+    }
+
+    .legend-dot { display: inline-block; width: 10px; height: 10px; margin-right: 5px; border: 2px solid #251c29; vertical-align: -1px; }
+    .legend-dot.free { background: #efe4bd; }
+    .legend-dot.special { background: #ffc5db; }
+    .legend-dot.taken { background: #706779; }
+
+    .chooser {
+      position: absolute;
+      z-index: 8;
+      inset: auto 14px 14px;
+      padding: 15px;
+      border: 5px solid #211823;
+      background: #fff9df;
+      box-shadow: 0 -8px 0 rgba(0,0,0,.18);
+      animation: drawer-up .22s steps(4, end) both;
+    }
+
+    .chooser[hidden] { display: none; }
+
+    .chooser-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+    .chooser-title { margin: 0; font-size: 13px; font-weight: 900; }
+    .chooser-close { border: 3px solid #261d2a; background: #e75a64; color: #fff; width: 30px; height: 30px; cursor: pointer; font-weight: 900; }
+
+    .chooser-grid {
+      display: grid;
+      grid-template-columns: repeat(8, minmax(64px, 1fr));
+      gap: 7px;
+      max-height: 270px;
+      overflow: auto;
+    }
+
+    .rider-choice {
+      position: relative;
+      min-height: 91px;
+      padding: 6px 3px 4px;
+      border: 3px solid #2a202e;
+      background: #f2e6bd;
+      color: #2b2130;
+      cursor: pointer;
+      box-shadow: 3px 3px 0 #aa9b78;
+      font-size: 8px;
+      font-weight: 900;
+      line-height: 1.1;
+    }
+
+    .rider-choice:hover:not(:disabled) { background: #fff1a9; transform: translateY(-2px); }
+    .rider-choice .pixel-avatar { width: 36px; height: 47px; margin: 0 auto 3px; }
+    .rider-choice:disabled { opacity: .28; cursor: not-allowed; filter: grayscale(1); }
+    .rider-choice.wrong-choice { background: #e2d6d3; }
+    .choice-rule { display: block; min-height: 16px; margin-top: 2px; color: #a4293e; font-size: 6px; line-height: 1.1; }
+
+    .toast {
+      position: fixed;
+      z-index: 70;
+      left: 50%;
+      top: 24px;
+      transform: translate(-50%, -140%);
+      width: min(90vw, 590px);
+      padding: 13px 18px;
+      border: 4px solid #251a29;
+      background: #ffef9a;
+      color: #3d2836;
+      box-shadow: 6px 6px 0 rgba(0,0,0,.34);
+      text-align: center;
+      font-size: 12px;
+      line-height: 1.45;
+      font-weight: 900;
+      transition: transform .24s steps(4, end);
+    }
+
+    .toast.show { transform: translate(-50%, 0); }
+
+    .celebration {
+      position: fixed;
+      z-index: 60;
+      inset: 0;
+      display: none;
+      place-items: center;
+      padding: 20px;
+      background: rgba(14, 9, 18, .69);
+    }
+
+    .celebration.show { display: grid; }
+
+    .celebration-card {
+      position: relative;
+      width: min(90vw, 490px);
+      padding: 28px 28px 24px;
+      border: 6px solid #27172a;
+      background: #ffe48a;
+      box-shadow: 0 0 0 7px #f04c55, 14px 14px 0 rgba(0,0,0,.38);
+      text-align: center;
+      animation: celebrate .55s steps(6, end) both;
+    }
+
+    .celebration-card h2 { margin: 8px 0 4px; color: #a3263d; font-size: clamp(20px, 5vw, 37px); line-height: 1; }
+    .celebration-card p { margin: 10px 0 0; color: #5a3d3e; font-size: 11px; font-weight: 900; }
+
+    .sign-scene { position: relative; width: 300px; height: 205px; margin: 0 auto; }
+    .celebration-pig {
+      position: absolute;
+      z-index: 3;
+      left: 20px;
+      bottom: 0;
+      width: 155px;
+      height: 155px;
+      filter: drop-shadow(6px 7px 0 rgba(82, 39, 52, .35));
+    }
+    .street-sign {
+      position: absolute;
+      z-index: 2;
+      right: 8px;
+      top: 20px;
+      width: 145px;
+      padding: 12px 7px;
+      border: 5px solid #f3e8ba;
+      outline: 5px solid #205e47;
+      background: #2d9164;
+      color: #fffdf0;
+      box-shadow: 8px 8px 0 rgba(0,0,0,.24);
+      font-size: 17px;
+      font-weight: 900;
+      letter-spacing: .03em;
+    }
+
+    .street-sign::after {
+      content: "";
+      position: absolute;
+      z-index: -1;
+      top: 100%;
+      left: 18px;
+      width: 11px;
+      height: 126px;
+      background: #81756d;
+      box-shadow: inset -4px 0 0 #554c49, 3px 0 0 #4c4140;
+    }
+
+    .runner-layer { position: absolute; z-index: 11; inset: 0; pointer-events: none; overflow: hidden; }
+    .runner { position: absolute; left: -110px; bottom: 194px; width: 66px; text-align: center; color: #fff; font-size: 9px; font-weight: 900; text-shadow: 2px 2px 0 #201724; }
+    .runner:nth-child(2) { bottom: 204px; left: -145px; }
+    .runner .pixel-avatar { width: 52px; height: 68px; margin: 0 auto; animation: run-bob .22s steps(2, end) infinite; }
+
+    .departing .parked-car:not([data-car="baghdo"]) { animation: drive-right 4.4s cubic-bezier(.38,.01,.83,.42) forwards; }
+    .departing .parked-car[data-car="anka"] { animation-delay: .05s; }
+    .departing .parked-car[data-car="beka-m"] { animation-delay: .18s; }
+    .departing .parked-car[data-car="beka-p"] { animation-delay: .1s; }
+    .departing .parked-car[data-car="keti-t"] { animation-delay: .3s; }
+    .departing .parked-car[data-car="keti-p"] { animation-delay: .4s; }
+    .runner.go { animation: runner-right 4.4s .65s cubic-bezier(.27,.11,.75,.38) forwards; }
+    .runner.go:nth-child(2) { animation-delay: .9s; }
+    .baghdo-leaves .parked-car[data-car="baghdo"] { animation: drive-left 3.3s cubic-bezier(.4,.03,.85,.5) forwards; }
+    .departed .parked-car:not([data-car="baghdo"]),
+    .baghdo-gone .parked-car[data-car="baghdo"] { visibility: hidden; }
+
+    .ending-screen {
+      z-index: 25;
+      background:
+        radial-gradient(circle at 10% 19%, #fff4a1 0 2px, transparent 3px),
+        radial-gradient(circle at 34% 32%, #fff 0 2px, transparent 3px),
+        radial-gradient(circle at 67% 12%, #fff4a1 0 2px, transparent 3px),
+        radial-gradient(circle at 89% 38%, #fff 0 2px, transparent 3px),
+        linear-gradient(#101735 0 67%, #202847 67% 100%);
+      animation: ending-in .5s steps(6, end) both;
+    }
+
+    .ending-line {
+      margin: 0 20px 30px;
+      color: #ffe66d;
+      font-size: clamp(30px, 6vw, 67px);
+      line-height: 1.15;
+      font-weight: 900;
+      letter-spacing: -.04em;
+      text-shadow: 0 5px 0 #b84e35, 5px 9px 0 #351d32;
+    }
+
+    .ending-pig { width: 82px; height: 102px; margin-bottom: 25px; animation: pig-dance .55s steps(2, end) infinite; }
+
+    @keyframes landing-in { from { opacity: 0; transform: scale(.82); } to { opacity: 1; transform: scale(1); } }
+    @keyframes rays { 50% { transform: rotate(8deg) scale(1.05); } }
+    @keyframes panel-pop { from { opacity: 0; transform: scale(.78); } to { opacity: 1; transform: scale(1); } }
+    @keyframes drawer-up { from { opacity: 0; transform: translateY(34px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes celebrate { 0% { transform: scale(.45) rotate(-5deg); opacity: 0; } 70% { transform: scale(1.06) rotate(2deg); opacity: 1; } 100% { transform: scale(1) rotate(0); } }
+    @keyframes drive-right { 0% { transform: translateX(0); } 9% { transform: translateX(-10px) translateY(-3px); } 100% { transform: translateX(var(--exit-x, 135vw)) translateY(-3px); } }
+    @keyframes drive-left { 0% { transform: translateX(0); } 10% { transform: translateX(9px) translateY(-3px); } 100% { transform: translateX(var(--exit-x, -135vw)) translateY(-3px); } }
+    @keyframes runner-right { 0% { transform: translateX(0); } 100% { transform: translateX(var(--exit-x, calc(100vw + 240px))); } }
+    @keyframes run-bob { 50% { transform: translateY(-8px) rotate(2deg); } }
+    @keyframes ending-in { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes pig-dance { 50% { transform: translateY(-10px) rotate(4deg); } }
+
+    @media (max-width: 980px) {
+      .game-shell { min-height: 580px; }
+      .parking-zone { flex-basis: 220px; padding-left: 8px; padding-right: 8px; overflow-x: auto; }
+      .cars-row { min-width: 960px; }
+      .roster-zone { overflow-x: auto; }
+      .roster { min-width: 940px; }
+      .chooser-grid { grid-template-columns: repeat(5, minmax(64px, 1fr)); }
+      .parking-zone,
+      .roster-zone { -webkit-overflow-scrolling: touch; touch-action: pan-x; scrollbar-width: thin; }
+    }
+
+    @media (max-width: 600px) {
+      .game-shell { height: 100dvh; min-height: 0; }
+      .sky-zone { min-height: 145px; }
+      .hud { top: 8px; left: 8px; right: 8px; align-items: flex-start; }
+      .hud-title { max-width: 42vw; padding: 7px; font-size: 9px; }
+      .progress-card { width: 50vw; padding: 6px; }
+      .progress-copy { font-size: 8px; }
+      .parking-zone { flex-basis: 210px; }
+      .roster-zone { flex-basis: 155px; }
+      .roster { min-width: 850px; }
+      .person-card { height: 109px; }
+      .car-overlay { padding: 10px; }
+      .interior-panel { width: 97vw; padding: 18px 12px 16px; }
+      .top-car { min-height: 350px; padding-left: 26px; padding-right: 26px; }
+      .seat { min-height: 100px; }
+      .chooser { inset: auto 7px 7px; padding: 10px; }
+      .chooser-grid { grid-template-columns: repeat(4, minmax(58px, 1fr)); max-height: 235px; }
+      .runner { bottom: 175px; }
+      .runner:nth-child(2) { bottom: 185px; }
+    }
+
+    @media (max-height: 650px) and (max-width: 980px) {
+      .game-shell { height: 100dvh; min-height: 0; }
+      .sky-zone { min-height: 105px; }
+      .parking-zone { flex-basis: 190px; padding-top: 7px; padding-bottom: 5px; }
+      .parked-car { height: 168px; }
+      .side-car { top: 55px; }
+      .roster-zone { flex-basis: 135px; padding-top: 7px; }
+      .person-card { height: 100px; }
+      .person-card .pixel-avatar { height: 57px; }
+      .runner { bottom: 145px; }
+      .runner:nth-child(2) { bottom: 155px; }
+      .landing-content { padding-block: 10px; }
+      .landing-content .logo-wrap { transform: scale(.82); margin-block: -12px; }
+      .game-title { margin-block: 8px 14px; }
+      .landing-subtitle { margin-bottom: 16px; line-height: 1.35; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .landing-content, .logo-rays, .ending-pig, .runner .pixel-avatar { animation: none; }
+    }
+
+    .test-mode *, .test-mode *::before, .test-mode *::after {
+      animation-duration: .04s !important;
+      animation-delay: 0s !important;
+      transition-duration: .04s !important;
+    }
+  </style>
+</head>
+<body>
+  <main id="game" class="game-shell" aria-live="polite">
+    <section id="landingScreen" class="screen landing-screen active" aria-labelledby="gameTitle">
+      <div class="landing-content">
+        <div class="logo-wrap" aria-label="Happy Piglet game logo">
+          <div class="logo-rays"></div>
+          <div id="landingPig"></div>
+        </div>
+        <h1 id="gameTitle" class="game-title">TIRDZNISI<br>CARPOOL</h1>
+        <p class="landing-subtitle">FILL EVERY SEAT · FOLLOW THE CARPOOL RULES · MAKE IT TO THE FEAST</p>
+        <button id="startButton" class="pixel-button start-button" type="button">START</button>
+      </div>
+    </section>
+
+    <section id="worldScreen" class="screen world-screen" aria-label="Tbilisi carpool scene">
+      <header class="hud">
+        <div class="hud-title">TIRDZNISI CARPOOL</div>
+        <div class="progress-card" aria-label="Carpool progress">
+          <div class="progress-copy"><span>SEATS FILLED</span><span id="progressText">0 / 13</span></div>
+          <div class="progress-track"><span id="progressFill" class="progress-fill"></span></div>
+        </div>
+      </header>
+
+      <div class="sky-zone">
+        <div class="sun"></div><div class="moon"></div><div class="stars"></div>
+        <div class="cloud one"></div><div class="cloud two"></div>
+        <svg class="skyline" viewBox="0 0 1200 320" preserveAspectRatio="none" aria-label="Simplified pixel-art Tbilisi skyline" role="img">
+          <path d="M0 183L74 142L127 157L205 105L267 143L337 88L404 128L468 73L526 122L605 90L674 133L751 84L820 122L891 101L960 137L1031 89L1113 139L1200 112V320H0Z" fill="#5e8c5d"/>
+          <path d="M0 210L93 161L172 194L245 148L318 180L405 130L492 177L571 143L654 188L746 137L832 180L932 143L1011 178L1104 137L1200 177V320H0Z" fill="#477358"/>
+          <g fill="#d9956f" stroke="#55362e" stroke-width="4">
+            <path d="M0 224H92V320H0Z M101 241H175V320H101Z M185 213H267V320H185Z M278 246H359V320H278Z M370 223H452V320H370Z M463 250H544V320H463Z M716 230H803V320H716Z M814 247H893V320H814Z M904 218H996V320H904Z M1008 239H1093V320H1008Z M1104 209H1200V320H1104Z"/>
+          </g>
+          <g fill="#ffe779">
+            <path d="M16 242h13v15H16zM43 242h13v15H43zM67 242h13v15H67zM118 259h13v15h-13zM145 259h13v15h-13zM202 234h14v17h-14zM234 234h14v17h-14zM296 265h14v16h-14zM329 265h14v16h-14zM388 244h14v16h-14zM422 244h14v16h-14zM480 269h14v16h-14zM515 269h14v16h-14zM736 249h14v16h-14zM770 249h14v16h-14zM831 266h14v16h-14zM864 266h14v16h-14zM923 238h15v17h-15zM959 238h15v17h-15zM1027 258h15v16h-15zM1061 258h15v16h-15zM1124 231h15v17h-15zM1161 231h15v17h-15z"/>
+          </g>
+          <g stroke="#4b3030" stroke-width="5" fill="#efe1bd">
+            <path d="M562 320V180H649V320Z"/>
+            <path d="M575 180V148H636V180Z"/>
+            <path d="M585 148Q605 106 625 148Z" fill="#e8b64e"/>
+            <path d="M601 107V89H610V107Z" fill="#e8b64e"/>
+            <path d="M579 201h20v30h-20zM613 201h20v30h-20zM579 249h20v30h-20zM613 249h20v30h-20z" fill="#70b5c1"/>
+          </g>
+          <g stroke="#352c39" stroke-width="5" fill="none">
+            <path d="M1063 211L1090 35L1117 211M1075 135H1105M1069 171H1111M1080 99H1100"/>
+            <path d="M1082 35H1098M1086 19H1094V35"/>
+          </g>
+          <path d="M0 294H1200V320H0Z" fill="#315846"/>
+        </svg>
+        <div class="district-sign">TBILISI</div>
+      </div>
+
+      <div class="parking-zone">
+        <div id="carsRow" class="cars-row"></div>
+      </div>
+
+      <div class="roster-zone">
+        <p class="roster-heading">CARPOOL CREW — PICK A CAR, THEN PICK A SEAT</p>
+        <div id="roster" class="roster"></div>
+      </div>
+      <div id="runnerLayer" class="runner-layer"></div>
+    </section>
+
+    <section id="endingScreen" class="screen ending-screen" aria-labelledby="endingLine">
+      <div id="endingPig"></div>
+      <h2 id="endingLine" class="ending-line">LET THE FEAST BEGIN</h2>
+      <button id="playAgainButton" class="pixel-button" type="button">PLAY AGAIN</button>
+    </section>
+
+    <div id="carOverlay" class="car-overlay" hidden>
+      <section id="interiorPanel" class="interior-panel" role="dialog" aria-modal="true" aria-labelledby="interiorTitle">
+        <button id="modalClose" class="modal-close" type="button" aria-label="Close car view">X</button>
+        <h2 id="interiorTitle" class="interior-title"></h2>
+        <p id="interiorSubtitle" class="interior-subtitle"></p>
+        <div id="topCar"></div>
+        <div class="interior-legend">
+          <span><i class="legend-dot free"></i>FREE SEAT</span>
+          <span><i class="legend-dot special"></i>RESERVED</span>
+          <span><i class="legend-dot taken"></i>OCCUPIED / FIXED</span>
+        </div>
+        <div id="chooser" class="chooser" hidden></div>
+      </section>
+    </div>
+
+    <div id="celebration" class="celebration" aria-hidden="true">
+      <div class="celebration-card">
+        <div class="sign-scene">
+          <div id="celebrationPig"></div>
+          <div class="street-sign">TIRDZNISI</div>
+        </div>
+        <h2>CARPOOL COMPLETE!</h2>
+        <p>EVERY SEAT IS FILLED — LET'S ROLL!</p>
+      </div>
+    </div>
+
+    <div id="toast" class="toast" role="status"></div>
+  </main>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const people = [
+        { id: "roba", name: "Roba", gender: "boy", skin: "#e7ae7f", hair: "#332219", shirt: "#e84b4b", accessory: "cap" },
+        { id: "gio", name: "Gio", gender: "boy", skin: "#dca477", hair: "#17151a", shirt: "#31a8d5", accessory: "glasses" },
+        { id: "natia", name: "Natia", gender: "girl", skin: "#f0bb8d", hair: "#d99b36", shirt: "#eb5c92", accessory: "long" },
+        { id: "ninu", name: "Ninu", gender: "girl", skin: "#dca174", hair: "#21191b", shirt: "#7b66d9", accessory: "bob" },
+        { id: "khatex", name: "Khatex", gender: "girl", skin: "#e9af82", hair: "#4c2a1e", shirt: "#2db8a3", accessory: "headband" },
+        { id: "ele", name: "Ele", gender: "girl", skin: "#f2bf94", hair: "#b44d2f", shirt: "#f3a43b", accessory: "sidepony" },
+        { id: "tamuna", name: "Tamuna", gender: "girl", skin: "#c88f68", hair: "#20191d", shirt: "#d65479", accessory: "curls" },
+        { id: "mari", name: "Mari", gender: "girl", skin: "#e7aa7c", hair: "#68402b", shirt: "#5abf6b", accessory: "ponytail" },
+        { id: "sofia", name: "Sofia", gender: "girl", skin: "#f3c49b", hair: "#e5b84d", shirt: "#6a83db", accessory: "flower" },
+        { id: "kiko", name: "Kiko", gender: "girl", skin: "#dfa476", hair: "#532d25", shirt: "#bd61dc", accessory: "pigtails" },
+        { id: "nanuki", name: "Nanuki", gender: "girl", skin: "#edb78a", hair: "#2d221c", shirt: "#58ad7a", accessory: "beanie" },
+        { id: "ekaterine", name: "Ekaterine", gender: "girl", skin: "#d79870", hair: "#39201e", shirt: "#a43d66", accessory: "braid" },
+        { id: "tata", name: "Tata", gender: "girl", skin: "#efb78a", hair: "#a74e2d", shirt: "#f08c46", accessory: "fringe" },
+        { id: "ano", name: "Ano", gender: "girl", skin: "#deb080", hair: "#2a2527", shirt: "#4ea8d8", accessory: "bow" },
+        { id: "piglet", name: "Piglet", type: "pig", skin: "#f4a6bd", shirt: "#ef5b6d", accessory: "happy" }
+      ];
+
+      const fixedPeople = [
+        { id: "anka", name: "Anka", gender: "girl", skin: "#efb78d", hair: "#4b2a22", shirt: "#e94e84", accessory: "bow" },
+        { id: "beka-m", name: "Beka M.", gender: "boy", skin: "#d99f72", hair: "#231b19", shirt: "#22aab8", accessory: "glasses" },
+        { id: "beka-p", name: "Beka P.", gender: "boy", skin: "#e8af81", hair: "#68361f", shirt: "#eaa92e", accessory: "side" },
+        { id: "keti-t", name: "Keti T.", gender: "girl", skin: "#efb689", hair: "#57301f", shirt: "#8d69d8", accessory: "braid" },
+        { id: "keti-p", name: "Keti P.", gender: "girl", skin: "#d69b70", hair: "#181619", shirt: "#ef668d", accessory: "curls" },
+        { id: "baghdo", name: "Baghdo", gender: "boy", skin: "#d6a075", hair: "#3d2b22", shirt: "#55ad68", accessory: "beard" },
+        { id: "zura", name: "Zura", gender: "boy", skin: "#e3aa7e", hair: "#34251f", shirt: "#ef7d35", accessory: "moustache" }
+      ];
+
+      const allPeople = [...people, ...fixedPeople];
+      const personById = Object.fromEntries(allPeople.map(person => [person.id, person]));
+
+      const generalSeat = (id, label, row) => ({ id, label, row, kind: "general" });
+      const reservedSeat = (id, label, row, reservedFor) => ({ id, label, row, kind: "reserved", reservedFor });
+
+      const cars = [
+        {
+          id: "anka", name: "Anka", driver: "anka", color: "#e94f87",
+          front: generalSeat("front-right", "FRONT RIGHT", "front"),
+          back: [generalSeat("back-left", "BACK LEFT", "back"), generalSeat("back-right", "BACK RIGHT", "back")]
+        },
+        {
+          id: "beka-m", name: "Beka M.", driver: "beka-m", color: "#2db6ce",
+          front: generalSeat("front-right", "FRONT RIGHT", "front"),
+          back: [generalSeat("back-left", "BACK LEFT", "back"), generalSeat("back-right", "BACK RIGHT", "back")]
+        },
+        {
+          id: "beka-p", name: "Beka P.", driver: "beka-p", color: "#efaa32",
+          front: generalSeat("front-right", "FRONT RIGHT", "front"),
+          back: [generalSeat("back-left", "BACK LEFT", "back"), generalSeat("back-middle", "BACK MIDDLE", "back"), generalSeat("back-right", "BACK RIGHT", "back")]
+        },
+        {
+          id: "keti-t", name: "Keti T.", driver: "keti-t", color: "#8d70d6",
+          front: { id: "front-zura", label: "FRONT RIGHT · FIXED", row: "front", kind: "fixed", occupant: "zura" },
+          back: [generalSeat("back-free", "BACK FREE", "back"), reservedSeat("back-piglet", "PIGLET ONLY", "back", "piglet")]
+        },
+        {
+          id: "keti-p", name: "Keti P.", driver: "keti-p", color: "#ef6c78", closed: true,
+          front: { id: "front-blocked", label: "NO AVAILABLE SEAT", row: "front", kind: "blocked" },
+          back: [{ id: "back-blocked", label: "NO AVAILABLE SEATS", row: "back", kind: "blocked" }]
+        },
+        {
+          id: "baghdo", name: "Baghdo", driver: "baghdo", color: "#51ae67",
+          front: reservedSeat("front-gio", "GIO ONLY", "front", "gio"),
+          back: []
+        }
+      ];
+
+      const carById = Object.fromEntries(cars.map(car => [car.id, car]));
+      const usableSeats = cars.flatMap(car => [car.front, ...car.back].filter(seat => seat && (seat.kind === "general" || seat.kind === "reserved")).map(seat => ({ car, seat })));
+      const totalSeats = usableSeats.length;
+
+      const state = {
+        assignments: {},
+        activeCarId: null,
+        activeSeatId: null,
+        phase: "landing",
+        timers: []
+      };
+
+      const $ = selector => document.querySelector(selector);
+      const landingScreen = $("#landingScreen");
+      const worldScreen = $("#worldScreen");
+      const endingScreen = $("#endingScreen");
+      const carsRow = $("#carsRow");
+      const parkingZone = $(".parking-zone");
+      const roster = $("#roster");
+      const carOverlay = $("#carOverlay");
+      const interiorPanel = $("#interiorPanel");
+      const chooser = $("#chooser");
+      const toast = $("#toast");
+      const celebration = $("#celebration");
+      const runnerLayer = $("#runnerLayer");
+      const progressText = $("#progressText");
+      const progressFill = $("#progressFill");
+      const testMode = new URLSearchParams(location.search).has("test");
+      if (testMode) document.documentElement.classList.add("test-mode");
+
+      function person(id) { return personById[id]; }
+      function car(id) { return carById[id]; }
+      function seatKey(carId, seatId) { return `${carId}:${seatId}`; }
+      function assignedSeatFor(personId) { return Object.entries(state.assignments).find(([, id]) => id === personId)?.[0] || null; }
+      function assignedCarFor(personId) { const key = assignedSeatFor(personId); return key ? car(key.split(":")[0]) : null; }
+      function filledInCar(carId) { return Object.keys(state.assignments).filter(key => key.startsWith(`${carId}:`)).length; }
+      function seatCount(carData) { return [carData.front, ...carData.back].filter(seat => seat && (seat.kind === "general" || seat.kind === "reserved")).length; }
+      function delay(ms) { return testMode ? Math.max(25, Math.round(ms * .018)) : ms; }
+      function schedule(fn, ms) { const timer = setTimeout(fn, delay(ms)); state.timers.push(timer); return timer; }
+
+      function viewportWidth() {
+        return Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0, window.visualViewport?.width || 0);
+      }
+
+      function setExitPath(element, direction) {
+        if (!element) return;
+        const margin = 150;
+        const rect = element.getBoundingClientRect();
+        const distance = direction === "left"
+          ? -Math.max(margin, rect.right + margin)
+          : Math.max(margin, viewportWidth() - rect.left + margin);
+        element.style.setProperty("--exit-x", `${Math.ceil(distance)}px`);
+      }
+
+      function scrollParkingTo(left) {
+        const behavior = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
+        try {
+          parkingZone.scrollTo({ left, behavior });
+        } catch {
+          parkingZone.scrollLeft = left;
+        }
+      }
+
+      function avatarSvg(id, className = "") {
+        const p = person(id);
+        if (!p) return "";
+        if (p.type === "pig") {
+          return `<svg class="pixel-avatar ${className}" viewBox="0 0 32 40" role="img" aria-label="${p.name} avatar">
+            <g shape-rendering="crispEdges">
+              <rect x="4" y="5" width="7" height="7" fill="#dc7998"/><rect x="21" y="5" width="7" height="7" fill="#dc7998"/>
+              <rect x="7" y="3" width="6" height="8" fill="#f4a6bd"/><rect x="19" y="3" width="6" height="8" fill="#f4a6bd"/>
+              <rect x="5" y="9" width="22" height="18" fill="#f4a6bd"/><rect x="8" y="7" width="16" height="22" fill="#f4a6bd"/>
+              <rect x="9" y="14" width="3" height="3" fill="#2d1a24"/><rect x="20" y="14" width="3" height="3" fill="#2d1a24"/>
+              <rect x="10" y="19" width="12" height="7" fill="#df7898"/><rect x="12" y="21" width="2" height="3" fill="#8a425b"/><rect x="18" y="21" width="2" height="3" fill="#8a425b"/>
+              <rect x="6" y="28" width="20" height="9" fill="#ef5b6d"/><rect x="3" y="29" width="4" height="7" fill="#f4a6bd"/><rect x="25" y="29" width="4" height="7" fill="#f4a6bd"/>
+              <rect x="9" y="37" width="5" height="3" fill="#87344a"/><rect x="18" y="37" width="5" height="3" fill="#87344a"/>
+              <rect x="13" y="17" width="6" height="2" fill="#fff0f3"/>
+            </g>
+          </svg>`;
+        }
+
+        const hairExtras = {
+          long: `<rect x="5" y="8" width="4" height="18" fill="${p.hair}"/><rect x="23" y="8" width="4" height="18" fill="${p.hair}"/>`,
+          bob: `<rect x="5" y="7" width="4" height="17" fill="${p.hair}"/><rect x="23" y="7" width="4" height="17" fill="${p.hair}"/><rect x="8" y="20" width="16" height="5" fill="${p.hair}"/>`,
+          headband: `<rect x="6" y="7" width="20" height="3" fill="#36dbc5"/><rect x="5" y="9" width="4" height="15" fill="${p.hair}"/><rect x="23" y="9" width="4" height="15" fill="${p.hair}"/>`,
+          sidepony: `<rect x="23" y="9" width="5" height="16" fill="${p.hair}"/><rect x="27" y="18" width="4" height="9" fill="${p.hair}"/>`,
+          curls: `<rect x="3" y="7" width="6" height="7" fill="${p.hair}"/><rect x="23" y="7" width="6" height="7" fill="${p.hair}"/><rect x="4" y="15" width="5" height="8" fill="${p.hair}"/><rect x="23" y="15" width="5" height="8" fill="${p.hair}"/>`,
+          ponytail: `<rect x="4" y="8" width="5" height="17" fill="${p.hair}"/><rect x="1" y="18" width="5" height="11" fill="${p.hair}"/>`,
+          flower: `<rect x="23" y="5" width="3" height="3" fill="#fff"/><rect x="20" y="8" width="3" height="3" fill="#fff"/><rect x="26" y="8" width="3" height="3" fill="#fff"/><rect x="23" y="8" width="3" height="3" fill="#ef6687"/><rect x="5" y="9" width="4" height="16" fill="${p.hair}"/><rect x="23" y="10" width="4" height="15" fill="${p.hair}"/>`,
+          pigtails: `<rect x="2" y="11" width="6" height="13" fill="${p.hair}"/><rect x="24" y="11" width="6" height="13" fill="${p.hair}"/><rect x="1" y="20" width="5" height="7" fill="${p.hair}"/><rect x="26" y="20" width="5" height="7" fill="${p.hair}"/>`,
+          beanie: `<rect x="6" y="3" width="20" height="7" fill="#4a9a6c"/><rect x="10" y="0" width="12" height="4" fill="#4a9a6c"/><rect x="5" y="9" width="22" height="3" fill="#2d704b"/>`,
+          braid: `<rect x="5" y="8" width="4" height="16" fill="${p.hair}"/><rect x="3" y="21" width="5" height="5" fill="${p.hair}"/><rect x="2" y="26" width="5" height="5" fill="${p.hair}"/>`,
+          fringe: `<rect x="6" y="6" width="20" height="6" fill="${p.hair}"/><rect x="7" y="10" width="7" height="4" fill="${p.hair}"/><rect x="5" y="9" width="4" height="15" fill="${p.hair}"/>`,
+          bow: `<rect x="4" y="5" width="6" height="5" fill="#ffdf5c"/><rect x="12" y="5" width="6" height="5" fill="#ffdf5c"/><rect x="9" y="6" width="4" height="4" fill="#ea8149"/><rect x="5" y="9" width="4" height="15" fill="${p.hair}"/><rect x="23" y="9" width="4" height="15" fill="${p.hair}"/>`,
+          cap: `<rect x="5" y="4" width="19" height="7" fill="#d83c49"/><rect x="20" y="9" width="9" height="3" fill="#9c2432"/>`,
+          glasses: `<rect x="8" y="13" width="7" height="6" fill="none" stroke="#29202d" stroke-width="2"/><rect x="18" y="13" width="7" height="6" fill="none" stroke="#29202d" stroke-width="2"/><rect x="15" y="15" width="3" height="2" fill="#29202d"/>`,
+          side: `<rect x="6" y="5" width="20" height="7" fill="${p.hair}"/><rect x="5" y="9" width="9" height="5" fill="${p.hair}"/>`,
+          beard: `<rect x="8" y="18" width="16" height="6" fill="${p.hair}"/><rect x="11" y="22" width="10" height="3" fill="${p.hair}"/>`,
+          moustache: `<rect x="11" y="19" width="5" height="2" fill="${p.hair}"/><rect x="17" y="19" width="5" height="2" fill="${p.hair}"/>`
+        };
+
+        const baseHair = `<rect x="6" y="5" width="20" height="7" fill="${p.hair}"/><rect x="5" y="8" width="5" height="10" fill="${p.hair}"/><rect x="22" y="8" width="5" height="9" fill="${p.hair}"/>`;
+        return `<svg class="pixel-avatar ${className}" viewBox="0 0 32 40" role="img" aria-label="${p.name} avatar">
+          <g shape-rendering="crispEdges">
+            <rect x="8" y="7" width="16" height="17" fill="${p.skin}"/>
+            ${baseHair}${hairExtras[p.accessory] || ""}
+            <rect x="10" y="14" width="3" height="3" fill="#271c25"/><rect x="20" y="14" width="3" height="3" fill="#271c25"/>
+            <rect x="14" y="20" width="5" height="2" fill="#8f4e4b"/>
+            <rect x="7" y="24" width="18" height="12" fill="${p.shirt}"/><rect x="3" y="25" width="5" height="9" fill="${p.skin}"/><rect x="24" y="25" width="5" height="9" fill="${p.skin}"/>
+            <rect x="8" y="36" width="7" height="4" fill="#30394f"/><rect x="18" y="36" width="7" height="4" fill="#30394f"/>
+          </g>
+        </svg>`;
+      }
+
+      function celebrationPigSvg() {
+        return `<svg class="pixel-avatar celebration-pig" viewBox="0 0 50 50" role="img" aria-label="Happy Piglet holding the TIRDZNISI signpost">
+          <g shape-rendering="crispEdges">
+            <rect x="8" y="4" width="10" height="10" fill="#d97997"/>
+            <rect x="30" y="4" width="10" height="10" fill="#d97997"/>
+            <rect x="10" y="2" width="8" height="11" fill="#f5a9c0"/>
+            <rect x="30" y="2" width="8" height="11" fill="#f5a9c0"/>
+            <rect x="7" y="10" width="34" height="23" fill="#f5a9c0"/>
+            <rect x="11" y="7" width="26" height="29" fill="#f5a9c0"/>
+            <rect x="13" y="17" width="4" height="4" fill="#291b24"/>
+            <rect x="31" y="17" width="4" height="4" fill="#291b24"/>
+            <rect x="16" y="22" width="17" height="9" fill="#dc7796"/>
+            <rect x="19" y="25" width="3" height="3" fill="#854158"/>
+            <rect x="27" y="25" width="3" height="3" fill="#854158"/>
+            <rect x="19" y="31" width="3" height="2" fill="#8a3c55"/>
+            <rect x="22" y="33" width="8" height="2" fill="#8a3c55"/>
+            <rect x="30" y="31" width="3" height="2" fill="#8a3c55"/>
+            <rect x="12" y="35" width="26" height="11" fill="#ef596d"/>
+            <rect x="5" y="36" width="8" height="6" fill="#f5a9c0"/>
+            <rect x="36" y="36" width="12" height="6" fill="#f5a9c0"/>
+            <rect x="45" y="34" width="5" height="10" fill="#f5a9c0"/>
+            <rect x="15" y="46" width="8" height="4" fill="#8a3951"/>
+            <rect x="29" y="46" width="8" height="4" fill="#8a3951"/>
+            <rect x="47" y="36" width="3" height="6" fill="#7c6f68"/>
+          </g>
+        </svg>`;
+      }
+
+      function carMarkup(carData) {
+        const total = seatCount(carData);
+        const filled = filledInCar(carData.id);
+        const pipMarkup = total
+          ? Array.from({ length: total }, (_, index) => `<i class="${index < filled ? "filled" : ""}"></i>`).join("")
+          : `<i class="reserved"></i>`;
+        return `<button class="parked-car" data-car="${carData.id}" type="button" aria-label="Open ${carData.name}'s car, ${filled} of ${total} seats filled" style="--car-color:${carData.color}">
+          <span class="car-name">${carData.name}</span>
+          <span class="car-count">${total ? `${filled}/${total}` : "0"}</span>
+          <span class="side-car">
+            <span class="car-body"></span>
+            <span class="car-window-back"></span><span class="car-window-front"></span>
+            <span class="driver-mini">${avatarSvg(carData.driver)}</span><span class="steering-wheel"></span>
+            <span class="wheel left"></span><span class="wheel right"></span>
+            <span class="bumper front"></span><span class="bumper back"></span>
+            <span class="passenger-pips">${pipMarkup}</span>
+          </span>
+          ${carData.closed ? `<span class="closed-ribbon">DRIVER ONLY</span>` : ""}
+        </button>`;
+      }
+
+      function renderCars() {
+        carsRow.innerHTML = cars.map(carMarkup).join("");
+      }
+
+      function renderRoster() {
+        roster.innerHTML = people.map(p => {
+          const assignedCar = assignedCarFor(p.id);
+          return `<div class="person-card ${assignedCar ? "seated" : ""}" data-person="${p.id}" data-car-label="${assignedCar ? `IN ${assignedCar.name.toUpperCase()}` : ""}">
+            <span class="person-name">${p.name}</span>${avatarSvg(p.id)}
+          </div>`;
+        }).join("");
+      }
+
+      function renderProgress() {
+        const filled = Object.keys(state.assignments).length;
+        progressText.textContent = `${filled} / ${totalSeats}`;
+        progressFill.style.width = `${filled / totalSeats * 100}%`;
+      }
+
+      function renderWorld() {
+        renderCars();
+        renderRoster();
+        renderProgress();
+      }
+
+      function seatMarkup(carData, seatData) {
+        if (!seatData) return "";
+        if (seatData.kind === "fixed") {
+          const occupant = person(seatData.occupant);
+          return `<div class="seat fixed" aria-label="${occupant.name}, fixed passenger">
+            <span class="seat-label">${seatData.label}</span>${avatarSvg(occupant.id)}<span class="seat-person">${occupant.name}</span>
+          </div>`;
+        }
+        if (seatData.kind === "blocked") {
+          return `<button class="seat blocked" data-blocked="${carData.id}" type="button" aria-label="${seatData.label}">
+            <span class="seat-label">${seatData.label}</span><span class="seat-icon">×</span>
+          </button>`;
+        }
+        const key = seatKey(carData.id, seatData.id);
+        const occupantId = state.assignments[key];
+        const occupant = occupantId ? person(occupantId) : null;
+        if (occupant) {
+          return `<button class="seat occupied" data-seat="${seatData.id}" type="button" aria-label="${seatData.label}, occupied by ${occupant.name}; click to remove">
+            <span class="seat-label">${seatData.label}</span>${avatarSvg(occupant.id)}<span class="seat-person">${occupant.name}</span>
+          </button>`;
+        }
+        const reserved = seatData.kind === "reserved";
+        return `<button class="seat empty ${reserved ? "reserved" : ""}" data-seat="${seatData.id}" type="button" aria-label="${seatData.label}, empty">
+          <span class="seat-label">${seatData.label}</span><span class="seat-icon">+</span>
+          ${reserved ? `<span class="seat-person">FOR ${person(seatData.reservedFor).name.toUpperCase()}</span>` : `<span class="seat-person">CHOOSE RIDER</span>`}
+        </button>`;
+      }
+
+      function driverSeatMarkup(carData) {
+        return `<div class="seat fixed driver-seat" aria-label="${carData.name}, driver">
+          <span class="seat-label">DRIVER · LOCKED</span>${avatarSvg(carData.driver)}<span class="seat-person">${carData.name}</span><i class="wheel-mark"></i>
+        </div>`;
+      }
+
+      function renderInterior() {
+        const carData = car(state.activeCarId);
+        if (!carData) return;
+        $("#interiorTitle").textContent = `${carData.name}'S CAR`;
+        $("#interiorSubtitle").textContent = carData.closed
+          ? "Keti P. is driving, but this car has no available passenger seats."
+          : "Click an empty seat to choose a rider. Click an occupied seat to return that rider to the pavement.";
+        interiorPanel.style.setProperty("--panel-color", carData.color);
+        const backMarkup = carData.back.length
+          ? carData.back.map(seat => seatMarkup(carData, seat)).join("")
+          : `<button class="seat blocked" data-blocked="${carData.id}" type="button"><span class="seat-label">NO BACK SEATS</span><span class="seat-icon">×</span></button>`;
+        $("#topCar").innerHTML = `<div class="top-car" style="--panel-color:${carData.color}">
+          <i class="top-wheel a"></i><i class="top-wheel b"></i>
+          <div class="seat-row front-row">${driverSeatMarkup(carData)}${seatMarkup(carData, carData.front)}</div>
+          <div class="seat-row back-row" style="--back-count:${Math.max(1, carData.back.length)}">${backMarkup}</div>
+        </div>`;
+      }
+
+      function openCar(carId) {
+        if (state.phase !== "playing") return;
+        state.activeCarId = carId;
+        state.activeSeatId = null;
+        chooser.hidden = true;
+        renderInterior();
+        carOverlay.hidden = false;
+        document.body.style.overflow = "hidden";
+        $("#modalClose").focus();
+      }
+
+      function closeCar() {
+        chooser.hidden = true;
+        carOverlay.hidden = true;
+        state.activeCarId = null;
+        state.activeSeatId = null;
+        document.body.style.overflow = "hidden";
+      }
+
+      function getActiveSeat() {
+        const carData = car(state.activeCarId);
+        if (!carData) return null;
+        return [carData.front, ...carData.back].find(seat => seat && seat.id === state.activeSeatId) || null;
+      }
+
+      function choiceRule(personId, seatData) {
+        if (assignedSeatFor(personId)) return "ALREADY SEATED";
+        if (seatData.kind === "reserved" && personId !== seatData.reservedFor) return `RESERVED FOR ${person(seatData.reservedFor).name.toUpperCase()}`;
+        if (seatData.kind === "general" && personId === "piglet") return "PIGLET HAS A SPECIAL SEAT";
+        if (seatData.kind === "general" && personId === "gio") return "GIO RIDES WITH BAGHDO";
+        return "";
+      }
+
+      function renderChooser() {
+        const seatData = getActiveSeat();
+        if (!seatData) return;
+        const reservedName = seatData.kind === "reserved" ? person(seatData.reservedFor).name : null;
+        chooser.innerHTML = `<div class="chooser-head">
+          <h3 class="chooser-title">${reservedName ? `THIS SEAT IS RESERVED FOR ${reservedName.toUpperCase()}` : "WHO TAKES THIS SEAT?"}</h3>
+          <button class="chooser-close" type="button" aria-label="Close rider list">X</button>
+        </div>
+        <div class="chooser-grid">${people.map(p => {
+          const rule = choiceRule(p.id, seatData);
+          const alreadySeated = Boolean(assignedSeatFor(p.id));
+          return `<button class="rider-choice ${rule && !alreadySeated ? "wrong-choice" : ""}" data-choice="${p.id}" type="button" ${alreadySeated ? "disabled" : ""}>
+            ${avatarSvg(p.id)}<span>${p.name}</span><small class="choice-rule">${rule}</small>
+          </button>`;
+        }).join("")}</div>`;
+        chooser.hidden = false;
+        chooser.querySelector(".chooser-close").addEventListener("click", () => { chooser.hidden = true; });
+      }
+
+      let toastTimer;
+      function showToast(message) {
+        clearTimeout(toastTimer);
+        toast.textContent = message;
+        toast.classList.add("show");
+        toastTimer = setTimeout(() => toast.classList.remove("show"), delay(2200));
+      }
+
+      function selectSeat(seatId) {
+        const carData = car(state.activeCarId);
+        const seatData = [carData.front, ...carData.back].find(seat => seat && seat.id === seatId);
+        if (!seatData || seatData.kind === "fixed" || seatData.kind === "blocked") return;
+        const key = seatKey(carData.id, seatData.id);
+        if (state.assignments[key]) {
+          const rider = person(state.assignments[key]);
+          delete state.assignments[key];
+          showToast(`${rider.name} returned to the pavement.`);
+          renderWorld();
+          renderInterior();
+          return;
+        }
+        state.activeSeatId = seatId;
+        renderChooser();
+      }
+
+      function assignRider(personId) {
+        const carData = car(state.activeCarId);
+        const seatData = getActiveSeat();
+        if (!carData || !seatData) return;
+        const rule = choiceRule(personId, seatData);
+        if (rule) {
+          if (rule === "ALREADY SEATED") return;
+          const message = seatData.kind === "reserved"
+            ? `This seat is reserved for ${person(seatData.reservedFor).name}. Choose the reserved rider.`
+            : personId === "piglet"
+              ? "Piglet has a reserved seat in Keti T.'s car."
+              : "Gio's seat is beside Baghdo. He can only ride there.";
+          showToast(message);
+          return;
+        }
+        state.assignments[seatKey(carData.id, seatData.id)] = personId;
+        chooser.hidden = true;
+        state.activeSeatId = null;
+        renderWorld();
+        renderInterior();
+        if (Object.keys(state.assignments).length === totalSeats) startEnding();
+      }
+
+      function startEnding() {
+        state.phase = "celebrating";
+        clearTimeout(toastTimer);
+        toast.classList.remove("show");
+        closeCar();
+        celebration.classList.add("show");
+        celebration.setAttribute("aria-hidden", "false");
+        schedule(startDeparture, 3000);
+      }
+
+      function startDeparture() {
+        celebration.classList.remove("show");
+        celebration.setAttribute("aria-hidden", "true");
+        state.phase = "departing";
+        const runners = people.filter(p => !assignedSeatFor(p.id));
+        runnerLayer.innerHTML = runners.map(p => `<div class="runner go"><span>${p.name}</span>${avatarSvg(p.id)}</div>`).join("");
+        scrollParkingTo(0);
+        carsRow.querySelectorAll('.parked-car:not([data-car="baghdo"])').forEach(element => setExitPath(element, "right"));
+        runnerLayer.querySelectorAll(".runner").forEach(element => setExitPath(element, "right"));
+        worldScreen.classList.add("departing");
+        schedule(() => {
+          worldScreen.classList.add("departed", "night");
+          runnerLayer.innerHTML = "";
+          state.phase = "night";
+          scrollParkingTo(parkingZone.scrollWidth);
+          schedule(() => {
+            setExitPath(carsRow.querySelector('[data-car="baghdo"]'), "left");
+            worldScreen.classList.add("baghdo-leaves");
+            state.phase = "baghdo-leaving";
+            schedule(() => {
+              worldScreen.classList.add("baghdo-gone");
+              showEnding();
+            }, 3600);
+          }, 1600);
+        }, 5550);
+      }
+
+      function showEnding() {
+        state.phase = "ending";
+        worldScreen.classList.remove("active");
+        endingScreen.classList.add("active");
+        $("#playAgainButton").focus();
+      }
+
+      function startGame() {
+        state.phase = "playing";
+        landingScreen.classList.remove("active");
+        endingScreen.classList.remove("active");
+        worldScreen.classList.add("active");
+        renderWorld();
+      }
+
+      function resetGame() {
+        state.timers.forEach(clearTimeout);
+        state.timers = [];
+        clearTimeout(toastTimer);
+        state.assignments = {};
+        state.activeCarId = null;
+        state.activeSeatId = null;
+        state.phase = "landing";
+        carOverlay.hidden = true;
+        chooser.hidden = true;
+        celebration.classList.remove("show");
+        celebration.setAttribute("aria-hidden", "true");
+        toast.classList.remove("show");
+        runnerLayer.innerHTML = "";
+        worldScreen.classList.remove("active", "departing", "departed", "night", "baghdo-leaves", "baghdo-gone");
+        carsRow.querySelectorAll(".parked-car").forEach(element => element.style.removeProperty("--exit-x"));
+        scrollParkingTo(0);
+        endingScreen.classList.remove("active");
+        landingScreen.classList.add("active");
+        renderWorld();
+        $("#startButton").focus();
+      }
+
+      function fillAllValidSeats() {
+        const regularRiders = people.filter(p => p.id !== "gio" && p.id !== "piglet").map(p => p.id);
+        let index = 0;
+        state.assignments = {};
+        usableSeats.forEach(({ car: carData, seat }) => {
+          state.assignments[seatKey(carData.id, seat.id)] = seat.kind === "reserved" ? seat.reservedFor : regularRiders[index++];
+        });
+        renderWorld();
+      }
+
+      carsRow.addEventListener("click", event => {
+        const carButton = event.target.closest("[data-car]");
+        if (carButton) openCar(carButton.dataset.car);
+      });
+
+      $("#topCar").addEventListener("click", event => {
+        const blocked = event.target.closest("[data-blocked]");
+        if (blocked) {
+          const carData = car(blocked.dataset.blocked);
+          showToast(carData.closed ? `No passenger seats are available in ${carData.name}'s car.` : "There is no seat here.");
+          return;
+        }
+        const seatButton = event.target.closest("[data-seat]");
+        if (seatButton) selectSeat(seatButton.dataset.seat);
+      });
+
+      chooser.addEventListener("click", event => {
+        const choice = event.target.closest("[data-choice]");
+        if (choice && !choice.disabled) assignRider(choice.dataset.choice);
+      });
+
+      carOverlay.addEventListener("click", event => { if (event.target === carOverlay) closeCar(); });
+      $("#modalClose").addEventListener("click", closeCar);
+      $("#startButton").addEventListener("click", startGame);
+      $("#playAgainButton").addEventListener("click", resetGame);
+      document.addEventListener("keydown", event => { if (event.key === "Escape" && !carOverlay.hidden) closeCar(); });
+
+      $("#landingPig").innerHTML = avatarSvg("piglet", "logo-avatar");
+      $("#celebrationPig").innerHTML = celebrationPigSvg();
+      $("#endingPig").innerHTML = avatarSvg("piglet", "ending-pig");
+      renderWorld();
+
+      window.__tirdznisiGame = {
+        getState: () => JSON.parse(JSON.stringify(state)),
+        getSeatCount: () => totalSeats,
+        canSeat: (personId, carId, seatId) => {
+          const carData = car(carId);
+          const seatData = carData && [carData.front, ...carData.back].find(seat => seat && seat.id === seatId);
+          if (!seatData || (seatData.kind !== "general" && seatData.kind !== "reserved")) {
+            return { allowed: false, rule: "SEAT UNAVAILABLE" };
+          }
+          const rule = choiceRule(personId, seatData);
+          return { allowed: !rule, rule };
+        },
+        fillAllValidSeats,
+        startEnding,
+        resetGame
+      };
+    })();
+  </script>
+</body>
+</html>
